@@ -11,7 +11,8 @@ import {
   LogIn, 
   AlertCircle,
   Coins,
-  Sparkles
+  Sparkles,
+  LogOut
 } from 'lucide-react';
 import AstronautAvatar from '../components/AstronautAvatar';
 import { fetchUniversalLeaderboard } from '../utils/leaderboard';
@@ -19,7 +20,8 @@ import {
   getPlayerClans, 
   createClan, 
   joinClanByCode, 
-  fetchClanLeaderboard 
+  fetchClanLeaderboard,
+  leaveClan
 } from '../services/clanService';
 import { 
   DAILY_TOP10_REWARDS, 
@@ -59,6 +61,8 @@ export default function LeaderboardPage({
   const [joinCode, setJoinCode] = useState('');
   const [clanError, setClanError] = useState('');
   const [copiedCode, setCopiedCode] = useState(null);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [isLeavingClan, setIsLeavingClan] = useState(false);
 
   // 1. Load Universal Scores
   const loadUniversalScores = useCallback(async () => {
@@ -222,6 +226,29 @@ export default function LeaderboardPage({
     }
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2500);
+  };
+
+  // Leave Clan Handler
+  const handleLeaveClan = async () => {
+    if (!selectedClan?.id || isLeavingClan) return;
+    setIsLeavingClan(true);
+    try {
+      playWarning();
+      await leaveClan(selectedClan.id, playerId);
+      setShowLeaveConfirm(false);
+      const updatedClans = await getPlayerClans(playerId);
+      setMyClans(updatedClans || []);
+      if (updatedClans && updatedClans.length > 0) {
+        setSelectedClan(updatedClans[0]);
+      } else {
+        setSelectedClan(null);
+        setClanScores([]);
+      }
+    } catch (e) {
+      console.warn('Failed to leave clan:', e);
+    } finally {
+      setIsLeavingClan(false);
+    }
   };
 
   const getRankBadge = (index) => {
@@ -514,61 +541,76 @@ export default function LeaderboardPage({
                   </div>
                 </div>
               ) : (
-                scores.map((item, index) => (
-                  <div
-                    key={item.id || index}
-                    className="p-2.5 sm:p-3 bg-white border-2 border-slate-200 hover:border-amber-400 rounded-2xl flex items-center justify-between gap-3 shadow-xs transition-all"
-                  >
-                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                      <div className="w-8 flex items-center justify-center shrink-0">
-                        {getRankBadge(index)}
-                      </div>
+                scores.map((item, index) => {
+                  const isCurrentPlayer = (item.playerId && item.playerId === playerId) || (item.playerTag && item.playerTag === playerTag);
+                  const displayAvatar = isCurrentPlayer && avatar ? avatar : item.avatar;
+                  const displayName = isCurrentPlayer && playerName ? playerName : (item.playerName || 'Cadet');
+                  const displayTag = isCurrentPlayer && playerTag ? playerTag : (item.playerTag || '#0000');
 
-                      <div className="w-8 h-8 rounded-xl bg-amber-100 border-2 border-game-ink flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
-                        <AstronautAvatar avatar={item.avatar} size={30} />
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-fredoka font-black text-sm sm:text-base text-slate-900 truncate">
-                            {item.playerName || 'Cadet'}
-                          </span>
-                          <span className="text-[11px] font-bold text-slate-400">
-                            {item.playerTag}
-                          </span>
-                          {getDiffBadge(item.difficulty)}
+                  return (
+                    <div
+                      key={item.id || index}
+                      className={`p-2.5 sm:p-3 rounded-2xl flex items-center justify-between gap-3 shadow-xs transition-all border-2 ${
+                        isCurrentPlayer
+                          ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-300/50'
+                          : 'bg-white border-slate-200 hover:border-amber-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <div className="w-8 flex items-center justify-center shrink-0">
+                          {getRankBadge(index)}
                         </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
-                          <span>
-                            {item.outpost === 'both'
-                              ? (lang === 'tr' ? '🌙 & 🪐 İki Üs' : '🌙 & 🪐 Both Bases')
-                              : item.outpost === 'moon'
-                                ? (lang === 'tr' ? '🌙 Ay' : '🌙 Moon')
-                                : (lang === 'tr' ? '🪐 Mars' : '🪐 Mars')}
-                          </span>
-                          <span>•</span>
-                          <span>
-                            {item.missionsCount && item.missionsCount > 1
-                              ? (lang === 'tr' ? `${item.missionsCount} Görev • ${item.daysSurvived} Gün` : `${item.missionsCount} Missions • ${item.daysSurvived} Sols`)
-                              : (lang === 'tr' ? `${item.daysSurvived} Gün` : `${item.daysSurvived} Days`)}
-                          </span>
-                          {item.date && (
-                            <>
-                              <span>•</span>
-                              <span>{item.date}</span>
-                            </>
-                          )}
+
+                        <div className="w-8 h-8 rounded-xl bg-amber-100 border-2 border-game-ink flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+                          <AstronautAvatar avatar={displayAvatar} size={30} />
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-fredoka font-black text-sm sm:text-base text-slate-900 truncate">
+                              {displayName}
+                            </span>
+                            <span className="text-[11px] font-bold text-slate-400">
+                              {displayTag}
+                            </span>
+                            {isCurrentPlayer && (
+                              <span className="px-1.5 py-0.2 rounded-md bg-amber-200 text-amber-900 text-[10px] font-black border border-amber-300">
+                                {lang === 'tr' ? 'Sen' : 'You'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                            <span>
+                              {item.outpost === 'both'
+                                ? (lang === 'tr' ? '🌙 & 🪐 İki Üs' : '🌙 & 🪐 Both Bases')
+                                : item.outpost === 'moon'
+                                  ? (lang === 'tr' ? '🌙 Ay' : '🌙 Moon')
+                                  : (lang === 'tr' ? '🪐 Mars' : '🪐 Mars')}
+                            </span>
+                            <span>•</span>
+                            <span>
+                              {item.missionsCount && item.missionsCount > 1
+                                ? (lang === 'tr' ? `${item.missionsCount} Görev • ${item.daysSurvived} Gün` : `${item.missionsCount} Missions • ${item.daysSurvived} Sols`)
+                                : (lang === 'tr' ? `${item.daysSurvived} Gün` : `${item.daysSurvived} Days`)}
+                            </span>
+                            {item.date && (
+                              <>
+                                <span>•</span>
+                                <span>{item.date}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <div className="font-fredoka font-black text-base sm:text-lg text-amber-600 leading-none">
+                          {item.score?.toLocaleString()} <span className="text-xs font-bold text-slate-500">pts</span>
                         </div>
                       </div>
                     </div>
-
-                    <div className="text-right shrink-0">
-                      <div className="font-fredoka font-black text-base sm:text-lg text-amber-600 leading-none">
-                        {item.score?.toLocaleString()} <span className="text-xs font-bold text-slate-500">pts</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -610,6 +652,7 @@ export default function LeaderboardPage({
                           key={clan.id}
                           onClick={() => {
                             playPop();
+                            setShowLeaveConfirm(false);
                             setSelectedClan(clan);
                           }}
                           className={`p-2.5 rounded-2xl border-2 sm:border-3 cursor-pointer flex items-center justify-between gap-2 transition-all ${
@@ -709,7 +752,7 @@ export default function LeaderboardPage({
               {selectedClan ? (
                 <div className="flex-1 min-h-0 flex flex-col">
                   {/* Clan Header */}
-                  <div className="flex items-center justify-between gap-2 pb-3 mb-2 border-b-2 border-game-ink/20 shrink-0">
+                  <div className="flex items-center justify-between gap-2 pb-3 mb-2 border-b-2 border-game-ink/20 shrink-0 flex-wrap">
                     <div>
                       <h3 className="font-heading font-black text-lg sm:text-xl text-slate-900 leading-tight">
                         {selectedClan.name}
@@ -726,19 +769,64 @@ export default function LeaderboardPage({
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playPop();
-                        loadClanScores(selectedClan.id);
-                      }}
-                      disabled={isLoadingClanScores}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border-2 border-game-ink font-heading font-black text-xs shadow-sm transition-transform active:scale-95"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isLoadingClanScores ? 'animate-spin text-indigo-600' : ''}`} />
-                      <span>{t.refreshBtn || 'Refresh'}</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playPop();
+                          loadClanScores(selectedClan.id);
+                        }}
+                        disabled={isLoadingClanScores}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border-2 border-game-ink font-heading font-black text-xs shadow-sm transition-transform active:scale-95"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isLoadingClanScores ? 'animate-spin text-indigo-600' : ''}`} />
+                        <span>{t.refreshBtn || 'Refresh'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playClick();
+                          setShowLeaveConfirm((prev) => !prev);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border-2 border-rose-300 hover:border-rose-400 font-heading font-black text-xs shadow-sm transition-transform active:scale-95"
+                        title={t.leaveClanBtn || 'Leave Clan'}
+                      >
+                        <LogOut className="w-3.5 h-3.5 text-rose-600" />
+                        <span>{t.leaveClanBtn || 'Leave Clan'}</span>
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Confirmation Banner for Leaving Clan */}
+                  {showLeaveConfirm && (
+                    <div className="mb-3 p-2.5 sm:p-3 rounded-2xl bg-rose-50 border-2 border-rose-300 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-fade-in shrink-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                        <span className="text-xs font-bold text-rose-950 leading-tight">
+                          {t.leaveClanConfirm || 'Are you sure you want to leave this clan?'} <b className="text-rose-900">({selectedClan.name})</b>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                        <button
+                          type="button"
+                          onClick={() => setShowLeaveConfirm(false)}
+                          className="px-3 py-1 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-black transition-transform active:scale-95"
+                        >
+                          {t.cancelLeave || 'Cancel'}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isLeavingClan}
+                          onClick={handleLeaveClan}
+                          className="px-3 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs shadow-sm transition-transform active:scale-95 flex items-center gap-1"
+                        >
+                          <LogOut className="w-3 h-3" />
+                          <span>{isLeavingClan ? '...' : (t.confirmLeave || 'Yes, Leave')}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Clan Scores List */}
                   <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-2">
@@ -750,34 +838,51 @@ export default function LeaderboardPage({
                         </div>
                       </div>
                     ) : (
-                      clanScores.map((item, idx) => (
-                        <div
-                          key={item.id || idx}
-                          className="p-2.5 bg-white border-2 border-slate-200 rounded-xl flex items-center justify-between gap-2 shadow-xs"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-7 flex items-center justify-center shrink-0">
-                              {getRankBadge(idx)}
-                            </div>
-                            <div className="w-7 h-7 rounded-lg bg-amber-100 border border-game-ink flex items-center justify-center shrink-0 overflow-hidden">
-                              <AstronautAvatar avatar={item.avatar} size={26} />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="font-heading font-black text-xs sm:text-sm text-slate-900 truncate">
-                                {item.playerName} <span className="text-[10px] text-slate-400 font-bold">{item.playerTag}</span>
-                              </div>
-                              <div className="text-[10px] text-slate-500 font-medium">
-                                {item.outpost === 'both' ? '🌙 & 🪐 Both Bases' : item.outpost === 'moon' ? '🌙 Moon' : '🪐 Mars'}
-                                {item.missionsCount && item.missionsCount > 1 ? ` • ${item.missionsCount} missions` : ` • ${item.daysSurvived}d`}
-                              </div>
-                            </div>
-                          </div>
+                      clanScores.map((item, idx) => {
+                        const isCurrentPlayer = (item.playerId && item.playerId === playerId) || (item.playerTag && item.playerTag === playerTag);
+                        const displayAvatar = isCurrentPlayer && avatar ? avatar : item.avatar;
+                        const displayName = isCurrentPlayer && playerName ? playerName : (item.playerName || 'Cadet');
+                        const displayTag = isCurrentPlayer && playerTag ? playerTag : (item.playerTag || '#0000');
 
-                          <div className="font-fredoka font-black text-sm sm:text-base text-amber-600 shrink-0">
-                            {item.score?.toLocaleString()} pts
+                        return (
+                          <div
+                            key={item.id || idx}
+                            className={`p-2.5 rounded-xl flex items-center justify-between gap-2 shadow-xs border-2 transition-all ${
+                              isCurrentPlayer
+                                ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-300/50'
+                                : 'bg-white border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-7 flex items-center justify-center shrink-0">
+                                {getRankBadge(idx)}
+                              </div>
+                              <div className="w-7 h-7 rounded-lg bg-amber-100 border border-game-ink flex items-center justify-center shrink-0 overflow-hidden">
+                                <AstronautAvatar avatar={displayAvatar} size={26} />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-heading font-black text-xs sm:text-sm text-slate-900 truncate flex items-center gap-1 flex-wrap">
+                                  <span>{displayName}</span>
+                                  <span className="text-[10px] text-slate-400 font-bold">{displayTag}</span>
+                                  {isCurrentPlayer && (
+                                    <span className="px-1.5 py-0.2 rounded-md bg-amber-200 text-amber-900 text-[9px] font-black border border-amber-300">
+                                      {lang === 'tr' ? 'Sen' : 'You'}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-slate-500 font-medium">
+                                  {item.outpost === 'both' ? (lang === 'tr' ? '🌙 & 🪐 İki Üs' : '🌙 & 🪐 Both Bases') : item.outpost === 'moon' ? (lang === 'tr' ? '🌙 Ay' : '🌙 Moon') : (lang === 'tr' ? '🪐 Mars' : '🪐 Mars')}
+                                  {item.missionsCount && item.missionsCount > 1 ? (lang === 'tr' ? ` • ${item.missionsCount} görev` : ` • ${item.missionsCount} missions`) : (lang === 'tr' ? ` • ${item.daysSurvived} gün` : ` • ${item.daysSurvived}d`)}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="font-fredoka font-black text-sm sm:text-base text-amber-600 shrink-0">
+                              {item.score?.toLocaleString()} pts
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>

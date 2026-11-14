@@ -31,7 +31,7 @@ import {
   unlockCosmetic
 } from './data/avatarConfig';
 import { getPlayerId, getPlayerTag } from './utils/playerIdentity';
-import { calculateScore, submitScore } from './utils/leaderboard';
+import { calculateScore, submitScore, syncPlayerProfileToLeaderboards } from './utils/leaderboard';
 import { translations } from './data/translations';
 import { spaceAudio } from './utils/audio';
 
@@ -105,7 +105,7 @@ export default function App() {
   const diffConfig = DIFFICULTY_CONFIGS[difficulty] || DIFFICULTY_CONFIGS.medium;
   const totalDays = diffConfig.totalDays;
 
-  // Save cadet name to localStorage
+  // Save cadet name to localStorage & sync across all leaderboards
   const handleNameChange = (name) => {
     setPlayerName(name);
     try {
@@ -113,6 +113,12 @@ export default function App() {
     } catch (e) {
       // ignore
     }
+    syncPlayerProfileToLeaderboards({
+      playerId,
+      playerName: name,
+      playerTag,
+      avatarConfig: avatar
+    });
   };
 
   // Save difficulty to localStorage
@@ -125,10 +131,16 @@ export default function App() {
     }
   };
 
-  // Save custom avatar
+  // Save custom avatar & sync across all leaderboards
   const handleSaveAvatar = (newAvatar) => {
     setAvatar(newAvatar);
     saveStoredAvatar(newAvatar);
+    syncPlayerProfileToLeaderboards({
+      playerId,
+      playerName,
+      playerTag,
+      avatarConfig: newAvatar
+    });
   };
 
   // Economy Handlers

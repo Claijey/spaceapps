@@ -165,7 +165,7 @@ create policy "Allow public insert clans"
   on public.clans for insert
   with check (length(code) = 6 and length(trim(name)) >= 2);
 
--- CLAN MEMBERS POLICIES: Public read + Validated insert
+-- CLAN MEMBERS POLICIES: Public read, insert, update (profile sync), and delete (leave clan)
 drop policy if exists "Allow public read clan_members" on public.clan_members;
 create policy "Allow public read clan_members"
   on public.clan_members for select
@@ -175,6 +175,17 @@ drop policy if exists "Allow public insert clan_members" on public.clan_members;
 create policy "Allow public insert clan_members"
   on public.clan_members for insert
   with check (length(player_id) > 0 and length(trim(player_name)) > 0);
+
+drop policy if exists "Allow public update clan_members" on public.clan_members;
+create policy "Allow public update clan_members"
+  on public.clan_members for update
+  using (true)
+  with check (length(player_id) > 0 and length(trim(player_name)) > 0);
+
+drop policy if exists "Allow public delete clan_members" on public.clan_members;
+create policy "Allow public delete clan_members"
+  on public.clan_members for delete
+  using (true);
 
 -- ==============================================================================
 -- CLEANUP & MERGE SQL FOR EXISTING SUPABASE DATABASES:
@@ -230,3 +241,9 @@ create policy "Allow public insert clan_members"
 --     ALTER TABLE public.scores ADD CONSTRAINT uq_player_outpost_diff UNIQUE (player_id, outpost, difficulty);
 --   END IF;
 -- END $$;
+--
+-- 5. Add Clan Members UPDATE and DELETE RLS Policies (for Profile Sync & Leave Clan)
+-- DROP POLICY IF EXISTS "Allow public update clan_members" ON public.clan_members;
+-- CREATE POLICY "Allow public update clan_members" ON public.clan_members FOR UPDATE USING (true) WITH CHECK (length(player_id) > 0 AND length(trim(player_name)) > 0);
+-- DROP POLICY IF EXISTS "Allow public delete clan_members" ON public.clan_members;
+-- CREATE POLICY "Allow public delete clan_members" ON public.clan_members FOR DELETE USING (true);

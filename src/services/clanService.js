@@ -352,3 +352,38 @@ export async function fetchClanLeaderboard(clanId) {
   const aggregated = aggregateLeaderboardByPlayer(memberScores);
   return aggregated.slice(0, 50);
 }
+
+/**
+ * Leave a clan (removes player membership from Supabase and local storage)
+ * Immediately frees up a slot in the 3-clan limit.
+ */
+export async function leaveClan(clanId, playerId) {
+  if (!clanId || !playerId) {
+    return { error: 'invalid_params' };
+  }
+
+  if (isSupabaseConnected()) {
+    try {
+      const { error } = await supabase
+        .from('clan_members')
+        .delete()
+        .eq('clan_id', clanId)
+        .eq('player_id', playerId);
+
+      if (error) {
+        console.warn('Supabase leaveClan error:', error);
+      }
+    } catch (e) {
+      console.warn('Supabase leaveClan exception:', e);
+    }
+  }
+
+  // Remove from local fallback
+  const localMembers = getLocalMembers();
+  const updatedMembers = localMembers.filter(
+    (m) => !(m.clan_id === clanId && m.player_id === playerId)
+  );
+  saveLocalMembers(updatedMembers);
+
+  return { success: true };
+}

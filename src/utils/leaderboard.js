@@ -446,3 +446,90 @@ export function calculateScore(daysSurvived, remainingBlocks, difficulty = 'medi
     totalBlocks
   };
 }
+
+/**
+ * Sync player name, tag, and avatar config across all leaderboard & clan member records.
+ * Updates both localStorage and Supabase so existing scores and clan rosters show current identity.
+ */
+export async function syncPlayerProfileToLeaderboards({ playerId, playerName, playerTag, avatarConfig }) {
+  if (!playerId && !playerTag) return;
+
+  // 1. Update localStorage scores
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (raw) {
+      const scores = JSON.parse(raw);
+      if (Array.isArray(scores)) {
+        let changed = false;
+        const updated = scores.map((s) => {
+          const pId = s.playerId || s.player_id;
+          if (pId === playerId || (playerTag && (s.playerTag === playerTag || s.player_tag === playerTag))) {
+            changed = true;
+            return {
+              ...s,
+              playerName: playerName || s.playerName || s.player_name,
+              player_name: playerName || s.player_name || s.playerName,
+              playerTag: playerTag || s.playerTag || s.player_tag,
+              player_tag: playerTag || s.player_tag || s.playerTag,
+              avatar: avatarConfig !== undefined ? avatarConfig : (s.avatar || s.avatar_config),
+              avatar_config: avatarConfig !== undefined ? avatarConfig : (s.avatar_config || s.avatar)
+            };
+          }
+          return s;
+        });
+        if (changed) {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('syncPlayerProfile localStorage scores error:', e);
+  }
+
+  // 2. Update localStorage clan members
+  try {
+    const rawMembers = localStorage.getItem('space_base_local_members_v1');
+    if (rawMembers) {
+      const members = JSON.parse(rawMembers);
+      if (Array.isArray(members)) {
+        let changed = false;
+        const updatedMembers = members.map((m) => {
+          if (m.player_id === playerId || (playerTag && m.player_tag === playerTag)) {
+            changed = true;
+            return {
+              ...m,
+              player_name: playerName || m.player_name,
+              player_tag: playerTag || m.player_tag,
+              avatar_config: avatarConfig !== undefined ? avatarConfig : m.avatar_config
+            };
+          }
+          return m;
+        });
+        if (changed) {
+          localStorage.setItem('space_base_local_members_v1', JSON.stringify(updatedMembers));
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('syncPlayerProfile localStorage members error:', e);
+  }
+
+  // 3. Update Supabase scores and clan_members if connected
+  if (isSupabaseConnected()) {
+    try {
+      const payload = {};
+      if (playerName) payload.player_name = playerName;
+      if (playerTag) payload.player_tag = playerTag;
+      if (avatarConfig !== undefined) payload.avatar_config = avatarConfig;
+
+      if (Object.keys(payload).length > 0) {
+        await Promise.allSettled([
+          supabase.from('scores').update(payload).eq('player_id', playerId),
+          supabase.from('clan_members').update(payload).eq('player_id', playerId)
+        ]);
+      }
+    } catch (e) {
+      console.warn('Supabase syncPlayerProfile error:', e);
+    }
+  }
+}
