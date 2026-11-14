@@ -539,9 +539,19 @@ export default function LeaderboardPage({
                           {getDiffBadge(item.difficulty)}
                         </div>
                         <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
-                          <span>{item.outpost === 'moon' ? '🌙 Moon' : '🪐 Mars'}</span>
+                          <span>
+                            {item.outpost === 'both'
+                              ? (lang === 'tr' ? '🌙 & 🪐 İki Üs' : '🌙 & 🪐 Both Bases')
+                              : item.outpost === 'moon'
+                                ? (lang === 'tr' ? '🌙 Ay' : '🌙 Moon')
+                                : (lang === 'tr' ? '🪐 Mars' : '🪐 Mars')}
+                          </span>
                           <span>•</span>
-                          <span>{item.daysSurvived} {lang === 'tr' ? 'Gün' : 'Days'}</span>
+                          <span>
+                            {item.missionsCount && item.missionsCount > 1
+                              ? (lang === 'tr' ? `${item.missionsCount} Görev • ${item.daysSurvived} Gün` : `${item.missionsCount} Missions • ${item.daysSurvived} Sols`)
+                              : (lang === 'tr' ? `${item.daysSurvived} Gün` : `${item.daysSurvived} Days`)}
+                          </span>
                           {item.date && (
                             <>
                               <span>•</span>
@@ -757,7 +767,8 @@ export default function LeaderboardPage({
                                 {item.playerName} <span className="text-[10px] text-slate-400 font-bold">{item.playerTag}</span>
                               </div>
                               <div className="text-[10px] text-slate-500 font-medium">
-                                {item.outpost === 'moon' ? '🌙 Moon' : '🪐 Mars'} • {item.daysSurvived}d
+                                {item.outpost === 'both' ? '🌙 & 🪐 Both Bases' : item.outpost === 'moon' ? '🌙 Moon' : '🪐 Mars'}
+                                {item.missionsCount && item.missionsCount > 1 ? ` • ${item.missionsCount} missions` : ` • ${item.daysSurvived}d`}
                               </div>
                             </div>
                           </div>

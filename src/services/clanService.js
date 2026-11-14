@@ -4,7 +4,7 @@
  */
 
 import { supabase, isSupabaseConnected } from './supabaseClient';
-import { getLocalScores, deduplicateLeaderboardEntries } from '../utils/leaderboard';
+import { getLocalScores, getLocalRawScores, aggregateLeaderboardByPlayer } from '../utils/leaderboard';
 
 const LOCAL_CLANS_KEY = 'space_base_local_clans_v1';
 const LOCAL_MEMBERS_KEY = 'space_base_local_members_v1';
@@ -297,6 +297,8 @@ export async function joinClanByCode({ code, playerId, playerName, playerTag, av
  * Fetch leaderboard ranking ONLY members of a specific clan
  */
 export async function fetchClanLeaderboard(clanId) {
+  let memberScores = [];
+
   if (isSupabaseConnected()) {
     try {
       // 1. Get member player_ids
@@ -314,10 +316,10 @@ export async function fetchClanLeaderboard(clanId) {
           .select('*')
           .in('player_id', playerIds)
           .order('score', { ascending: false })
-          .limit(50);
+          .limit(100);
 
         if (!sError && Array.isArray(scores)) {
-          const mapped = scores.map((d) => ({
+          memberScores = scores.map((d) => ({
             id: d.id,
             playerId: d.player_id,
             playerName: d.player_name,
@@ -325,12 +327,12 @@ export async function fetchClanLeaderboard(clanId) {
             avatar: d.avatar_config || {},
             outpost: d.outpost,
             difficulty: d.difficulty,
-            score: d.score,
-            daysSurvived: d.days_survived,
+            score: Number(d.score) || 0,
+            daysSurvived: Number(d.days_survived) || 1,
+            missionsCount: Number(d.missions_count) || 1,
             date: d.created_at ? d.created_at.split('T')[0] : '',
             isWin: true
           }));
-          return deduplicateLeaderboardEntries(mapped).slice(0, 50);
         }
       }
     } catch (e) {
@@ -339,8 +341,14 @@ export async function fetchClanLeaderboard(clanId) {
   }
 
   // Local fallback
-  const localMembers = getLocalMembers().filter((m) => m.clan_id === clanId);
-  const memberPlayerIds = localMembers.map((m) => m.player_id);
-  const localScores = getLocalScores();
-  return localScores.filter((s) => memberPlayerIds.includes(s.playerId));
+  if (memberScores.length === 0) {
+    const localMembers = getLocalMembers().filter((m) => m.clan_id === clanId);
+    const memberPlayerIds = localMembers.map((m) => m.player_id);
+    const localScores = getLocalRawScores();
+    memberScores = localScores.filter((s) => memberPlayerIds.includes(s.playerId || s.player_id));
+  }
+
+  // Aggregate by player_id so each member appears as 1 unified row with cumulative total!
+  const aggregated = aggregateLeaderboardByPlayer(memberScores);
+  return aggregated.slice(0, 50);
 }

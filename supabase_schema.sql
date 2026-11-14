@@ -14,8 +14,9 @@ create table if not exists public.scores (
   difficulty text not null check (difficulty in ('easy', 'medium', 'hard')),
   score integer not null check (score >= 0),
   days_survived integer not null check (days_survived >= 1),
+  missions_count integer not null default 1 check (missions_count >= 1),
   created_at timestamptz not null default now(),
-  -- Enforce strictly ONE best score entry per player per outpost & difficulty
+  -- Enforce strictly ONE cumulative row per player per outpost & difficulty
   constraint uq_player_outpost_diff unique (player_id, outpost, difficulty)
 );
 
@@ -72,7 +73,61 @@ before insert on public.clan_members
 for each row
 execute function public.check_max_clans_per_player();
 
--- 5. ROW LEVEL SECURITY (RLS) POLICIES
+-- 5. ATOMIC RPC FUNCTION: INCREMENT PLAYER SCORE
+create or replace function public.increment_player_score(
+  p_player_id text,
+  p_player_name text,
+  p_player_tag text,
+  p_avatar_config jsonb,
+  p_outpost text,
+  p_difficulty text,
+  p_earned_score integer,
+  p_days_survived integer
+)
+returns public.scores as $$
+declare
+  v_result public.scores;
+begin
+  insert into public.scores (
+    player_id,
+    player_name,
+    player_tag,
+    avatar_config,
+    outpost,
+    difficulty,
+    score,
+    days_survived,
+    missions_count,
+    created_at
+  )
+  values (
+    p_player_id,
+    p_player_name,
+    p_player_tag,
+    p_avatar_config,
+    p_outpost,
+    p_difficulty,
+    p_earned_score,
+    p_days_survived,
+    1,
+    now()
+  )
+  on conflict (player_id, outpost, difficulty)
+  do update set
+    score = public.scores.score + excluded.score,
+    days_survived = public.scores.days_survived + excluded.days_survived,
+    missions_count = public.scores.missions_count + 1,
+    player_name = excluded.player_name,
+    player_tag = excluded.player_tag,
+    avatar_config = excluded.avatar_config,
+    created_at = now()
+  returning * into v_result;
+
+  return v_result;
+end;
+$$ language plpgsql security definer;
+
+-- 6. ROW LEVEL SECURITY (RLS) POLICIES
 alter table public.scores enable row level security;
 alter table public.clans enable row level security;
 alter table public.clan_members enable row level security;
@@ -122,23 +177,51 @@ create policy "Allow public insert clan_members"
   with check (length(player_id) > 0 and length(trim(player_name)) > 0);
 
 -- ==============================================================================
--- CLEANUP & MIGRATION SQL FOR EXISTING SUPABASE DATABASES:
--- If your Supabase database already contains duplicates, run this snippet
--- in Supabase SQL Editor:
+-- CLEANUP & MERGE SQL FOR EXISTING SUPABASE DATABASES:
+-- If your Supabase database already contains separate or duplicate rows per game,
+-- run this snippet in your Supabase SQL Editor:
 -- ==============================================================================
 --
--- DELETE FROM public.scores a
--- USING public.scores b
--- WHERE a.id <> b.id
---   AND a.player_id = b.player_id
---   AND a.outpost = b.outpost
---   AND a.difficulty = b.difficulty
---   AND (
---     a.score < b.score
---     OR (a.score = b.score AND a.created_at < b.created_at)
---     OR (a.score = b.score AND a.created_at = b.created_at AND a.id < b.id)
---   );
+-- 1. Ensure missions_count column exists
+-- ALTER TABLE public.scores ADD COLUMN IF NOT EXISTS missions_count integer NOT NULL DEFAULT 1;
 --
+-- 2. Consolidate duplicate rows per (player_id, outpost, difficulty) by summing scores
+-- WITH consolidated AS (
+--   SELECT 
+--     player_id,
+--     outpost,
+--     difficulty,
+--     sum(score) AS total_score,
+--     sum(days_survived) AS total_days,
+--     count(*) AS total_missions,
+--     max(created_at) AS latest_created_at,
+--     (array_agg(id ORDER BY created_at DESC))[1] AS keep_id
+--   FROM public.scores
+--   GROUP BY player_id, outpost, difficulty
+--   HAVING count(*) > 1
+-- )
+-- UPDATE public.scores s
+-- SET 
+--   score = c.total_score,
+--   days_survived = c.total_days,
+--   missions_count = c.total_missions,
+--   created_at = c.latest_created_at
+-- FROM consolidated c
+-- WHERE s.id = c.keep_id;
+--
+-- 3. Delete the older merged duplicate rows
+-- DELETE FROM public.scores
+-- WHERE id IN (
+--   SELECT a.id
+--   FROM public.scores a
+--   JOIN public.scores b 
+--     ON a.player_id = b.player_id 
+--    AND a.outpost = b.outpost 
+--    AND a.difficulty = b.difficulty 
+--    AND a.created_at < b.created_at
+-- );
+--
+-- 4. Enforce the UNIQUE constraint
 -- DO $$
 -- BEGIN
 --   IF NOT EXISTS (
