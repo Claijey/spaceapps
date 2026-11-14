@@ -1,0 +1,188 @@
+{
+  "metadata": {
+    "title": "NASA Space Apps 2026 - Junior Astronaut Mission Trainer Fallback Dataset",
+    "version": "1.0",
+    "strictHonestyNotice": "This dataset contains verified historical NASA DONKI observations, NASA Artemis South Pole mission specs, NASA OSDR radiation data, and NASA NTRS communication delay measurements for educational offline play.",
+    "attribution": [
+      {
+        "source": "NASA DONKI (Space Weather Database Of Notifications, Knowledge, Information)",
+        "url": "https://api.nasa.gov/DONKI/",
+        "facility": "Community Coordinated Modeling Center (CCMC) at NASA Goddard Space Flight Center"
+      },
+      {
+        "source": "NASA OSDR (Open Science Data Repository)",
+        "url": "https://osdr.nasa.gov/",
+        "focus": "Biological response to space radiation, microgravity, and environmental stressors"
+      },
+      {
+        "source": "NASA Artemis Lunar South Pole Architecture",
+        "url": "https://www.nasa.gov/artemis",
+        "focus": "Shackleton Crater thermal environment (-203°C PSRs), abrasive regolith properties, and solar power"
+      },
+      {
+        "source": "NASA NTRS (NASA Technical Reports Server)",
+        "url": "https://ntrs.nasa.gov/",
+        "focus": "Deep Space Network (DSN) Mars-to-Earth 15-22 minute one-way communication latency"
+      }
+    ]
+  },
+  "archived_space_weather_events": [
+    {
+      "id": "FLR-2024-X1.6",
+      "type": "Solar Flare",
+      "classType": "X1.6",
+      "severity": "CRITICAL",
+      "activeRegion": 3664,
+      "peakTime": "2024-05-10T17:44Z",
+      "instruments": "GOES-16 EXIS (1.0-8.0 Angstrom)",
+      "impact": "Intense X-ray flux ionizes outer space weather sensors and creates extreme radiation hazard outside protected shelters.",
+      "juniorExplanation": "An X-Class Solar Flare is the biggest explosion in our solar system! It sends powerful invisible X-rays through space like a giant cosmic flashbulb."
+    },
+    {
+      "id": "CME-2024-05-10",
+      "type": "Coronal Mass Ejection",
+      "classType": "Halo CME",
+      "speedKmS": 1250,
+      "severity": "HIGH",
+      "instruments": "SOHO: LASCO/C2 & C3",
+      "impact": "Billions of tons of magnetized solar plasma erupting toward planetary outposts, producing strong magnetic fluctuations.",
+      "juniorExplanation": "A Coronal Mass Ejection is a gigantic bubble of hot gas and magnetism blasted off the Sun at over 2 million miles per hour!"
+    },
+    {
+      "id": "SEP-2024-05-11",
+      "type": "Solar Energetic Particles",
+      "classType": "S3 Strong Proton Storm",
+      "protonFlux100MeV": 48.5,
+      "severity": "CRITICAL",
+      "instruments": "GOES-18 SEISS MPS-HI",
+      "impact": "High-velocity subatomic protons penetrating unshielded habitat walls and degrading solar cell semiconductors.",
+      "juniorExplanation": "Solar Energetic Particles are tiny proton bullets traveling almost at the speed of light! Astronauts need thick water or regolith shielding to stay safe."
+    },
+    {
+      "id": "FLR-2024-M5.2",
+      "type": "Solar Flare",
+      "classType": "M5.2",
+      "severity": "CAUTION",
+      "activeRegion": 3668,
+      "peakTime": "2024-05-14T02:18Z",
+      "instruments": "GOES-18 EXIS",
+      "impact": "Moderate X-ray radiation wave causing brief radio communication crackle and slight sensor heating.",
+      "juniorExplanation": "An M-Class Solar Flare is a medium-sized solar blast. It can cause brief radio static between our outpost and orbiting relay satellites."
+    },
+    {
+      "id": "CME-2024-05-17",
+      "type": "Coronal Mass Ejection",
+      "classType": "Partial Halo CME",
+      "speedKmS": 820,
+      "severity": "MODERATE",
+      "instruments": "STEREO-A COR2",
+      "impact": "Gradual solar wind compression increasing static charge on outpost exterior surfaces.",
+      "juniorExplanation": "A passing solar wind gust that pushes magnetized plasma against our outpost's magnetic deflectors."
+    }
+  ],
+  "environmental_constants": {
+    "lunar": {
+      "name": "Artemis Lunar South Pole (Shackleton Rim)",
+      "targetCoordinates": "89.9°S, 0.0°E",
+      "surfaceGravity": "1.62 m/s² (1/6th Earth gravity)",
+      "atmosphere": "Exosphere vacuum (< 10⁻¹² bar)",
+      "extremeColdPSR": -203,
+      "extremeColdPSRFahrenheit": -334,
+      "sunlitPeakTemp": 54,
+      "keyHazards": [
+        "Abrasive electrostatically charged regolith dust that scratches visor seals and degrades solar array efficiency by 20-30%",
+        "Permanently Shadowed Regions (PSRs) plunging down to -203°C (-334°F), freezing battery chemistry and hydraulic lubricants",
+        "Total absence of atmosphere, exposing habitats to primary galactic cosmic rays and solar flares"
+      ],
+      "missionTip": "Peaks of Eternal Light provide continuous low-angle sunshine, but jagged regolith dust will stick to everything unless swept!"
+    },
+    "mars": {
+      "name": "Mars Jezero Crater Outpost",
+      "targetCoordinates": "18.38°N, 77.58°E",
+      "surfaceGravity": "3.72 m/s² (38% Earth gravity)",
+      "atmosphere": "Thin Carbon Dioxide (95% CO₂, surface pressure ~6.1 mbar - less than 1% of Earth)",
+      "averageTemp": -63,
+      "oneWayCommDelayMinMinutes": 15,
+      "oneWayCommDelayMaxMinutes": 22,
+      "roundTripCommDelayMaxMinutes": 44,
+      "keyHazards": [
+        "15 to 22 minute one-way radio latency (up to 44 minutes round-trip), requiring autonomous local decisions during crises",
+        "Global and regional dust storms obscuring solar irradiance by 50-70% and lowering temperatures",
+        "Atmospheric CO₂ requiring active MOXIE electrolysis units to extract breathable oxygen (O₂)"
+      ],
+      "missionTip": "Radio waves travel at the speed of light, but Mars is tens of millions of kilometers away! Asking Earth for help takes time to arrive."
+    }
+  },
+  "osdr_science_context": {
+    "radiationComparison": {
+      "earthSurfaceAnnual_mSv": 2.4,
+      "issOrbitAnnual_mSv": 150,
+      "lunarSurfaceAnnual_mSv": 380,
+      "marsSurfaceAnnual_mSv": 250,
+      "deepSpaceTransitAnnual_mSv": 600
+    },
+    "kidSummary": "Earth's thick atmosphere and magnetic field act as a giant shield protecting us. In deep space, astronauts receive over 100 times more radiation, so habitat shields and underground shelters are essential!"
+  },
+  "glossary": {
+    "sol": {
+      "term": "Sol",
+      "pronunciation": "SAHL",
+      "definition": "One full solar day on Mars (or one operational mission day). A Mars Sol lasts 24 hours, 39 minutes, and 35 seconds—just a little longer than an Earth day!",
+      "analogy": "Imagine your normal school day, but you get nearly 40 extra minutes of recess every single day!"
+    },
+    "regolith": {
+      "term": "Regolith",
+      "pronunciation": "REG-uh-lith",
+      "definition": "The layer of fine, powdery dust, broken rock, and mineral fragments covering the Moon and Mars. Because there is no rain or wind on the Moon to smooth it, lunar regolith is sharp like tiny shards of volcanic glass!",
+      "analogy": "Like microscopic ground-up glass and sandpaper that clings to astronaut spacesuits with static electricity."
+    },
+    "solar_flare": {
+      "term": "Solar Flare",
+      "pronunciation": "SOH-ler FLAIR",
+      "definition": "A sudden, intense burst of electromagnetic radiation from the Sun, caused by magnetic energy releasing near sunspots. Classified into C (minor), M (moderate), and X (extreme) classes.",
+      "analogy": "Like the Sun turning on a giant cosmic camera flash that sends radiation racing through the solar system at the speed of light."
+    },
+    "sep": {
+      "term": "Solar Energetic Particles (SEP)",
+      "pronunciation": "S-E-P",
+      "definition": "Streams of protons and atomic nuclei accelerated to nearly the speed of light by solar flares and shockwaves. They carry high energy and can damage spacecraft electronics.",
+      "analogy": "Tiny invisible subatomic race cars zooming across space that can bump into computer chips and human cells."
+    },
+    "cme": {
+      "term": "Coronal Mass Ejection (CME)",
+      "pronunciation": "KOR-uh-nul MASS ee-JEK-shun",
+      "definition": "A massive bubble of magnetized solar plasma (hot charged gas) blasted out into space by the Sun's magnetic field at millions of miles per hour.",
+      "analogy": "Like the Sun blowing a colossal bubble of hot magnetic wind that ripples across all the planets."
+    },
+    "communication_delay": {
+      "term": "Communication Delay (Latency)",
+      "pronunciation": "kuh-myoo-nih-KAY-shun dih-LAY",
+      "definition": "The time it takes for radio signals to travel between Earth and another planet. Because Mars is between 55 million and 400 million kilometers away, signals take 15 to 22 minutes one-way!",
+      "analogy": "If you say 'Hello' to Houston from Mars, you have to wait over 30 minutes before hearing them say 'Hello back!'."
+    },
+    "moxie": {
+      "term": "MOXIE (Mars Oxygen ISRU)",
+      "pronunciation": "MOK-see",
+      "definition": "NASA's Mars Oxygen In-Situ Resource Utilization Experiment. A toaster-sized machine on the Perseverance rover that takes Mars' carbon dioxide (CO₂) air and splits it into pure breathable oxygen (O₂).",
+      "analogy": "Like an artificial mechanical tree that breathes in Martian air and breathes out fresh oxygen for astronauts!"
+    },
+    "artemis": {
+      "term": "Artemis Program",
+      "pronunciation": "AR-tuh-miss",
+      "definition": "NASA's campaign to land the first woman and first person of color on the Moon, explore the extreme Lunar South Pole, and build long-term bases to prepare for Mars.",
+      "analogy": "The sibling mission to Apollo, building the first permanent human campground on the Moon."
+    },
+    "life_support": {
+      "term": "Life Support Systems (ECLSS)",
+      "pronunciation": "LYF suh-PORT",
+      "definition": "The complex machinery that provides clean oxygen, filters out carbon dioxide, recycles water, and controls cabin temperature to keep astronauts alive and comfortable.",
+      "analogy": "The giant mechanical lungs, water bottle, and heater of our space habitat."
+    },
+    "radiation_shielding": {
+      "term": "Radiation Shielding",
+      "pronunciation": "ray-dee-AY-shun SHEEL-ding",
+      "definition": "Protective barriers made of dense materials, water tanks, thick lunar regolith dirt, or active magnetic deflectors that absorb harmful cosmic rays and solar particles.",
+      "analogy": "Like putting on a high-tech suit of armor to protect our habitat from invisible cosmic arrows."
+    }
+  }
+}
