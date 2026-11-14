@@ -104,7 +104,7 @@ export default function CustomizePage({
   const currentTabObj = tabs.find((tObj) => tObj.id === activeTab) || tabs[0];
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col justify-between p-2 md:p-4 gap-2 bg-gradient-to-b from-[#1E1B4B] via-[#2A2665] to-[#1E1B4B] text-game-ink font-body max-md:min-h-[100dvh] max-md:h-auto max-md:overflow-y-auto">
+    <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col justify-between p-1.5 sm:p-2 md:p-4 gap-1.5 md:gap-2 bg-gradient-to-b from-[#1E1B4B] via-[#2A2665] to-[#1E1B4B] text-game-ink font-body select-none overscroll-none">
       {/* Top Bar: Title & Coin Balance */}
       <header className="w-full max-w-6xl mx-auto flex items-center justify-between gap-2 shrink-0">
         <button
@@ -246,7 +246,7 @@ export default function CustomizePage({
           </div>
 
           {/* Visual-Only Square Selection Tiles Grid (ZERO text inside tiles) */}
-          <div className="flex-1 min-h-0 bg-white border-3 border-game-ink rounded-2xl p-4 shadow-inner overflow-y-auto flex items-center justify-center">
+          <div className="flex-1 min-h-0 bg-white border-3 border-game-ink rounded-2xl p-4 shadow-inner overflow-y-auto overscroll-contain flex items-center justify-center">
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4 p-2">
               {currentTabObj.items.map((item) => {
                 const isUnlocked = unlockedCosmetics.includes(item.id);

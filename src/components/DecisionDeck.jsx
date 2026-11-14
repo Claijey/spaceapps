@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { 
   Flame, 
   Sun, 
@@ -44,8 +44,11 @@ const ICON_MAP = {
 export default function DecisionDeck({
   scenario,
   onSelectDecision,
+  onDragOverState,
   isProcessing = false
 }) {
+  const touchRef = useRef({ startX: 0, startY: 0, draggingId: null, isMoved: false });
+
   if (!scenario) return null;
 
   const handleDragStart = (e, decisionId) => {
@@ -54,8 +57,63 @@ export default function DecisionDeck({
     spaceAudio.playClick();
   };
 
+  const handleTouchStart = (e, decisionId) => {
+    if (isProcessing) return;
+    const touch = e.touches[0];
+    touchRef.current = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      draggingId: decisionId,
+      isMoved: false
+    };
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchRef.current.draggingId || isProcessing) return;
+    const touch = e.touches[0];
+    const dist = Math.hypot(touch.clientX - touchRef.current.startX, touch.clientY - touchRef.current.startY);
+    if (dist > 8) {
+      touchRef.current.isMoved = true;
+      const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+      const isOver = Boolean(elem?.closest('#outpost-drop-zone'));
+      if (onDragOverState) {
+        onDragOverState(isOver);
+      }
+    }
+  };
+
+  const handleTouchEnd = (e, decisionId) => {
+    if (isProcessing || !touchRef.current.draggingId) return;
+    const wasMoved = touchRef.current.isMoved;
+    const touch = e.changedTouches[0];
+
+    if (wasMoved) {
+      const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (elem?.closest('#outpost-drop-zone')) {
+        spaceAudio.playActivate();
+        onSelectDecision(decisionId);
+      }
+      if (onDragOverState) {
+        onDragOverState(false);
+      }
+    } else {
+      // If user tapped directly on button, let button onClick handle it
+      if (!e.target?.closest('button')) {
+        spaceAudio.playActivate();
+        onSelectDecision(decisionId);
+      }
+    }
+
+    touchRef.current = { startX: 0, startY: 0, draggingId: null, isMoved: false };
+  };
+
+  const handleTouchCancel = () => {
+    if (onDragOverState) onDragOverState(false);
+    touchRef.current = { startX: 0, startY: 0, draggingId: null, isMoved: false };
+  };
+
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-1 sm:space-y-1.5 shrink-0 px-1 sm:px-2">
+    <div className="w-full max-w-5xl mx-auto space-y-1 sm:space-y-1.5 shrink-0 px-1 sm:px-2 select-none">
       {/* Event Alert Pill if present */}
       {scenario.eventAlert && (
         <div className="bg-game-yellow border-2 sm:border-3 border-game-ink rounded-xl px-3 py-1 shadow-sm flex items-center gap-2 text-game-ink font-heading font-extrabold text-xs sm:text-sm">
@@ -92,7 +150,12 @@ export default function DecisionDeck({
               draggable
               onMouseEnter={() => spaceAudio.playPop()}
               onDragStart={(e) => handleDragStart(e, dec.id)}
-              className="bg-game-cream border-3 border-game-ink rounded-2xl p-2.5 sm:p-3 shadow-chunky hover:-translate-y-0.5 transition-all duration-150 cursor-grab active:cursor-grabbing flex flex-col justify-between"
+              onTouchStart={(e) => handleTouchStart(e, dec.id)}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={(e) => handleTouchEnd(e, dec.id)}
+              onTouchCancel={handleTouchCancel}
+              style={{ touchAction: 'none' }}
+              className="bg-game-cream border-3 border-game-ink rounded-2xl p-2.5 sm:p-3 shadow-chunky hover:-translate-y-0.5 transition-all duration-150 cursor-grab active:cursor-grabbing flex flex-col justify-between touch-none select-none"
             >
               <div>
                 {/* Header: Option number & Drag grip */}
@@ -139,11 +202,12 @@ export default function DecisionDeck({
               <button
                 type="button"
                 disabled={isProcessing}
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   spaceAudio.playActivate();
                   onSelectDecision(dec.id);
                 }}
-                className={`w-full min-h-[40px] sm:min-h-[44px] py-1.5 px-3 rounded-xl font-heading font-extrabold text-sm tracking-wide border-2 border-game-ink shadow-sm border-b-4 active:border-b-1 active:translate-y-1 transition-all flex items-center justify-center gap-1.5 ${btnBg}`}
+                className={`w-full min-h-[40px] sm:min-h-[44px] py-1.5 px-3 rounded-xl font-heading font-extrabold text-sm tracking-wide border-2 border-game-ink shadow-sm border-b-4 active:border-b-1 active:translate-y-1 transition-all flex items-center justify-center gap-1.5 ${btnBg} touch-manipulation`}
               >
                 <span>{dec.actionText || 'USE CARD'}</span>
                 <span>➔</span>

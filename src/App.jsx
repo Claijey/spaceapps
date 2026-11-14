@@ -390,7 +390,7 @@ export default function App() {
   const activeConfig = OUTPOST_CONFIGS[outpostType];
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col justify-between p-2 md:p-3 gap-1.5 md:gap-2 bg-gradient-to-b from-[#1E1B4B] via-[#2A2665] to-[#1E1B4B] text-game-ink font-body selection:bg-game-yellow max-md:min-h-[100dvh] max-md:h-auto max-md:overflow-y-auto">
+    <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col justify-between p-1.5 sm:p-2 md:p-3 gap-1 md:gap-2 bg-gradient-to-b from-[#1E1B4B] via-[#2A2665] to-[#1E1B4B] text-game-ink font-body selection:bg-game-yellow select-none overscroll-none">
       {/* Header Bar */}
       <HeaderBar
         isGameActive={gameState === 'playing' || gameState === 'outcome'}
@@ -419,7 +419,7 @@ export default function App() {
 
       {/* Main Game Stage */}
       {gameState === 'select' && (
-        <div className="flex-1 flex items-center justify-center overflow-y-auto">
+        <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-y-auto overscroll-contain">
           <OutpostSelector
             onSelectOutpost={(planet) => {
               navigate(`/${planet}`);
@@ -444,9 +444,9 @@ export default function App() {
       )}
 
       {(gameState === 'playing' || gameState === 'outcome') && (
-        <main className="flex-1 min-h-0 w-full max-w-5xl mx-auto flex flex-col justify-between gap-1.5 md:gap-2 overflow-hidden">
+        <main className="flex-1 min-h-0 w-full max-w-5xl mx-auto flex flex-col justify-between gap-1 sm:gap-1.5 md:gap-2 overflow-hidden">
           {/* ZONE 1: Top HUD + Astro-Buddy (shrink-0) */}
-          <div className="shrink-0 w-full space-y-1.5 sm:space-y-2">
+          <div className="shrink-0 w-full space-y-1 sm:space-y-1.5">
             <ResourceHUD blocks={blocks} lastDelta={lastDelta} t={t} />
             <AstroBuddy
               speechText={currentScenario?.buddySpeech || "What should we do to protect our base?"}
@@ -476,13 +476,14 @@ export default function App() {
             <DecisionDeck
               scenario={currentScenario}
               onSelectDecision={handleSelectDecision}
+              onDragOverState={setIsDraggingOver}
             />
           </div>
         </main>
       )}
 
       {gameState === 'debrief' && (
-        <div className="flex-1 flex items-center justify-center overflow-y-auto">
+        <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-y-auto overscroll-contain">
           <MissionDebrief
             debriefData={evaluateDebrief(blocks, outpostType, lang)}
             scoreData={missionScore}

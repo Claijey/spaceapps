@@ -65,6 +65,7 @@ export default function OutpostDioramaSVG({
 
       {/* Hero Outpost Diorama Frame */}
       <div
+        id="outpost-drop-zone"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}

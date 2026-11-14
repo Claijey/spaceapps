@@ -266,7 +266,7 @@ export default function LeaderboardPage({
   const rewardAmount = isTop10 ? (DAILY_TOP10_REWARDS[rankNum] || 50) : 0;
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col justify-between p-2 md:p-4 gap-2 bg-gradient-to-b from-[#1E1B4B] via-[#2A2665] to-[#1E1B4B] text-game-ink font-body max-md:min-h-[100dvh] max-md:h-auto max-md:overflow-y-auto">
+    <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col justify-between p-1.5 sm:p-2 md:p-4 gap-1.5 md:gap-2 bg-gradient-to-b from-[#1E1B4B] via-[#2A2665] to-[#1E1B4B] text-game-ink font-body select-none overscroll-none">
       {/* Top Header */}
       <header className="w-full max-w-6xl mx-auto flex items-center justify-between gap-2 shrink-0">
         <button
@@ -505,7 +505,7 @@ export default function LeaderboardPage({
             </div>
 
             {/* Scores Table */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-2">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-2">
               {scores.length === 0 ? (
                 <div className="py-16 text-center text-slate-500 font-bold space-y-2">
                   <div className="text-4xl">🚀</div>
@@ -570,7 +570,7 @@ export default function LeaderboardPage({
         {tab === 'clans' && (
           <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 overflow-hidden">
             {/* Left Column: Joined Clans List + Create / Join Forms (md:col-span-5) */}
-            <div className="md:col-span-5 p-3 sm:p-4 border-b-4 md:border-b-0 md:border-r-4 border-game-ink bg-amber-50/50 flex flex-col justify-between overflow-y-auto space-y-4">
+            <div className="md:col-span-5 p-3 sm:p-4 border-b-4 md:border-b-0 md:border-r-4 border-game-ink bg-amber-50/50 flex flex-col justify-between overflow-y-auto overscroll-contain space-y-4">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <h2 className="font-heading font-black text-base sm:text-lg text-slate-900">
@@ -731,7 +731,7 @@ export default function LeaderboardPage({
                   </div>
 
                   {/* Clan Scores List */}
-                  <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
+                  <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-2">
                     {clanScores.length === 0 ? (
                       <div className="py-12 text-center text-slate-500 font-bold space-y-1">
                         <div className="text-3xl">👥</div>
