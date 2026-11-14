@@ -40,9 +40,9 @@ export default function OutpostDioramaSVG({
   };
 
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className="w-full h-full max-h-full flex flex-col items-center justify-center min-h-0 flex-1">
       {/* Slim Status Bar ABOVE the SVG Frame (Never covers the sky or Earth) */}
-      <div className="w-full flex items-center justify-between px-2 py-1 mb-1.5 text-xs font-heading font-extrabold text-game-ink">
+      <div className="shrink-0 w-full flex items-center justify-between px-2 py-0.5 sm:py-1 mb-1 text-xs font-heading font-extrabold text-game-ink">
         <div className="flex items-center gap-2">
           <div className="bg-game-cream border-2 border-game-ink px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-game-mint animate-ping" />
@@ -63,17 +63,18 @@ export default function OutpostDioramaSVG({
         </div>
       </div>
 
-      {/* Hero Outpost Diorama Frame */}
-      <div
-        id="outpost-drop-zone"
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border-4 border-game-ink shadow-chunky transition-all duration-200 bg-game-sky ${
-          isDraggingOver ? 'ring-6 ring-game-yellow scale-[1.01]' : ''
-        }`}
-        style={{ aspectRatio: '800 / 320', maxHeight: '100%' }}
-      >
+      {/* Hero Outpost Diorama Frame Container */}
+      <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden">
+        <div
+          id="outpost-drop-zone"
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`relative max-h-full max-w-full aspect-[800/320] rounded-2xl sm:rounded-3xl overflow-hidden border-3 sm:border-4 border-game-ink shadow-chunky transition-all duration-200 bg-game-sky ${
+            isDraggingOver ? 'ring-6 ring-game-yellow scale-[1.01]' : ''
+          }`}
+          style={{ aspectRatio: '800 / 320' }}
+        >
         {/* Drop Zone Visual Prompt */}
         {isDraggingOver && (
           <div className="absolute inset-0 z-30 bg-game-sky/70 backdrop-blur-xs flex flex-col items-center justify-center pointer-events-none animate-fade-in border-4 border-dashed border-game-yellow">
@@ -349,5 +350,6 @@ export default function OutpostDioramaSVG({
         </svg>
       </div>
     </div>
-  );
+  </div>
+);
 }

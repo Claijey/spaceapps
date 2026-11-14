@@ -4,7 +4,7 @@
  */
 
 import { supabase, isSupabaseConnected } from './supabaseClient';
-import { getLocalScores } from '../utils/leaderboard';
+import { getLocalScores, deduplicateLeaderboardEntries } from '../utils/leaderboard';
 
 const LOCAL_CLANS_KEY = 'space_base_local_clans_v1';
 const LOCAL_MEMBERS_KEY = 'space_base_local_members_v1';
@@ -317,7 +317,7 @@ export async function fetchClanLeaderboard(clanId) {
           .limit(50);
 
         if (!sError && Array.isArray(scores)) {
-          return scores.map((d) => ({
+          const mapped = scores.map((d) => ({
             id: d.id,
             playerId: d.player_id,
             playerName: d.player_name,
@@ -330,6 +330,7 @@ export async function fetchClanLeaderboard(clanId) {
             date: d.created_at ? d.created_at.split('T')[0] : '',
             isWin: true
           }));
+          return deduplicateLeaderboardEntries(mapped).slice(0, 50);
         }
       }
     } catch (e) {

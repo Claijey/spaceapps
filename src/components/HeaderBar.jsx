@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Rocket, 
   Volume2, 
   VolumeX, 
   Music, 
   Database, 
-  RotateCcw,
-  Award,
-  Trophy,
-  Users
+  RotateCcw, 
+  Award, 
+  Trophy, 
+  Users,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import AstronautAvatar from './AstronautAvatar';
 import { spaceAudio } from '../utils/audio';
@@ -39,6 +41,50 @@ export default function HeaderBar({
 }) {
   const isLive = weatherData?.isLive;
 
+  const [isFullscreen, setIsFullscreen] = useState(() => {
+    if (typeof document === 'undefined') return false;
+    return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+  });
+
+  const isFullscreenSupported = typeof document !== 'undefined' && Boolean(
+    document.fullscreenEnabled || document.webkitFullscreenEnabled
+  );
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement || document.webkitFullscreenElement));
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    spaceAudio.playClick();
+    try {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        const el = document.documentElement;
+        if (el.requestFullscreen) {
+          el.requestFullscreen().catch(() => {});
+        } else if (el.webkitRequestFullscreen) {
+          el.webkitRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      }
+    } catch (e) {
+      // Safe fallback
+    }
+  };
+
   const getDiffBadge = () => {
     if (difficulty === 'hard') return '🔥';
     if (difficulty === 'easy') return '🌟';
@@ -46,8 +92,8 @@ export default function HeaderBar({
   };
 
   return (
-    <header className="w-full px-2 sm:px-6 py-1.5 sm:py-2 z-40 shrink-0">
-      <div className="max-w-5xl mx-auto flex items-center justify-between gap-1.5 sm:gap-2">
+    <header className="w-full h-11 sm:h-12 px-2 sm:px-4 z-40 shrink-0 flex items-center">
+      <div className="max-w-5xl mx-auto w-full flex items-center justify-between gap-1.5 sm:gap-2">
         {/* Game Title Logo & Call-sign */}
         <div 
           onClick={onExitGame}
@@ -174,6 +220,22 @@ export default function HeaderBar({
           >
             {!isSfxMuted ? <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500" />}
           </button>
+
+          {/* Fullscreen Toggle */}
+          {isFullscreenSupported && (
+            <button
+              type="button"
+              onClick={handleToggleFullscreen}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl border-2 border-game-ink flex items-center justify-center shadow-sm bg-game-cream text-game-ink transition-transform active:scale-95"
+              title={isFullscreen ? (lang === 'tr' ? 'Tam Ekrandan Çık' : 'Exit Fullscreen') : (lang === 'tr' ? 'Tam Ekran Yap' : 'Enter Fullscreen')}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-game-ink" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-game-ink" />
+              )}
+            </button>
+          )}
 
           {/* Language Switcher */}
           <button

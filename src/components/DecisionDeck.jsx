@@ -155,11 +155,11 @@ export default function DecisionDeck({
               onTouchEnd={(e) => handleTouchEnd(e, dec.id)}
               onTouchCancel={handleTouchCancel}
               style={{ touchAction: 'none' }}
-              className="bg-game-cream border-3 border-game-ink rounded-2xl p-2.5 sm:p-3 shadow-chunky hover:-translate-y-0.5 transition-all duration-150 cursor-grab active:cursor-grabbing flex flex-col justify-between touch-none select-none"
+              className="bg-game-cream border-3 border-game-ink rounded-2xl p-2 sm:p-2.5 shadow-chunky hover:-translate-y-0.5 transition-all duration-150 cursor-grab active:cursor-grabbing flex flex-col justify-between touch-none select-none"
             >
               <div>
                 {/* Header: Option number & Drag grip */}
-                <div className="flex items-center justify-between text-[10px] font-heading font-bold text-slate-500 mb-1">
+                <div className="flex items-center justify-between text-[10px] font-heading font-bold text-slate-500 mb-0.5">
                   <span className="px-1.5 py-0.2 rounded-full bg-slate-100 border border-slate-300">
                     #{idx + 1}
                   </span>
@@ -170,21 +170,21 @@ export default function DecisionDeck({
                 </div>
 
                 {/* Big Icon + 2-3 Word Title */}
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl border-2 flex items-center justify-center shrink-0 ${iconBg} shadow-xs`}>
-                    <IconComponent className="w-4 h-4 sm:w-5 sm:h-5" />
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl border-2 flex items-center justify-center shrink-0 ${iconBg} shadow-xs`}>
+                    <IconComponent className="w-4 h-4" />
                   </div>
-                  <h3 className="font-heading font-extrabold text-sm sm:text-base text-game-ink leading-tight truncate">
+                  <h3 className="font-heading font-extrabold text-xs sm:text-sm text-game-ink leading-tight truncate">
                     {dec.title}
                   </h3>
                 </div>
 
                 {/* Simple Trade-off Badges */}
-                <div className="flex flex-wrap gap-1 mb-2.5">
+                <div className="flex flex-wrap gap-1 mb-2">
                   {dec.chips.map((chip, cIdx) => (
                     <span
                       key={cIdx}
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] sm:text-xs font-heading font-extrabold border border-game-ink ${
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-heading font-extrabold border border-game-ink ${
                         chip.isPlus
                           ? 'bg-game-mint/40 text-emerald-950'
                           : 'bg-game-coral/30 text-rose-950'
@@ -192,7 +192,7 @@ export default function DecisionDeck({
                     >
                       <span>{chip.icon}</span>
                       <span>{chip.label}</span>
-                      <span className="text-xs sm:text-sm">{chip.val}</span>
+                      <span className="text-xs">{chip.val}</span>
                     </span>
                   ))}
                 </div>
@@ -207,7 +207,7 @@ export default function DecisionDeck({
                   spaceAudio.playActivate();
                   onSelectDecision(dec.id);
                 }}
-                className={`w-full min-h-[40px] sm:min-h-[44px] py-1.5 px-3 rounded-xl font-heading font-extrabold text-sm tracking-wide border-2 border-game-ink shadow-sm border-b-4 active:border-b-1 active:translate-y-1 transition-all flex items-center justify-center gap-1.5 ${btnBg} touch-manipulation`}
+                className={`w-full min-h-[36px] sm:min-h-[38px] py-1 px-3 rounded-xl font-heading font-extrabold text-xs sm:text-sm tracking-wide border-2 border-game-ink shadow-sm border-b-3 active:border-b-1 active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 ${btnBg} touch-manipulation`}
               >
                 <span>{dec.actionText || 'USE CARD'}</span>
                 <span>➔</span>

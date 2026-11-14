@@ -1,0 +1,18 @@
+{
+  "name": "Space Base Rescue! | NASA Space Apps",
+  "short_name": "Space Base",
+  "description": "A joyful space rescue game for kids ages 7-12! Command a Moon or Mars base and survive real NASA space weather events.",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#1E1B4B",
+  "theme_color": "#1E1B4B",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

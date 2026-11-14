@@ -14,7 +14,9 @@ create table if not exists public.scores (
   difficulty text not null check (difficulty in ('easy', 'medium', 'hard')),
   score integer not null check (score >= 0),
   days_survived integer not null check (days_survived >= 1),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Enforce strictly ONE best score entry per player per outpost & difficulty
+  constraint uq_player_outpost_diff unique (player_id, outpost, difficulty)
 );
 
 -- Indexes for lightning-fast leaderboard queries
@@ -23,6 +25,7 @@ create index if not exists idx_scores_outpost on public.scores (outpost);
 create index if not exists idx_scores_difficulty on public.scores (difficulty);
 create index if not exists idx_scores_player on public.scores (player_id);
 create index if not exists idx_scores_created_at on public.scores (created_at desc);
+create index if not exists idx_scores_player_outpost_diff on public.scores (player_id, outpost, difficulty);
 
 -- 2. CLANS TABLE
 create table if not exists public.clans (
@@ -74,7 +77,7 @@ alter table public.scores enable row level security;
 alter table public.clans enable row level security;
 alter table public.clan_members enable row level security;
 
--- SCORES POLICIES: Public read + Validated insert
+-- SCORES POLICIES: Public read + Validated insert, update (upsert) and delete duplicates
 drop policy if exists "Allow public read scores" on public.scores;
 create policy "Allow public read scores"
   on public.scores for select
@@ -84,6 +87,17 @@ drop policy if exists "Allow public insert scores" on public.scores;
 create policy "Allow public insert scores"
   on public.scores for insert
   with check (score >= 0 and length(trim(player_name)) > 0);
+
+drop policy if exists "Allow public update scores" on public.scores;
+create policy "Allow public update scores"
+  on public.scores for update
+  using (true)
+  with check (score >= 0 and length(trim(player_name)) > 0);
+
+drop policy if exists "Allow public delete duplicate scores" on public.scores;
+create policy "Allow public delete duplicate scores"
+  on public.scores for delete
+  using (true);
 
 -- CLANS POLICIES: Public read + Validated insert
 drop policy if exists "Allow public read clans" on public.clans;
@@ -106,3 +120,30 @@ drop policy if exists "Allow public insert clan_members" on public.clan_members;
 create policy "Allow public insert clan_members"
   on public.clan_members for insert
   with check (length(player_id) > 0 and length(trim(player_name)) > 0);
+
+-- ==============================================================================
+-- CLEANUP & MIGRATION SQL FOR EXISTING SUPABASE DATABASES:
+-- If your Supabase database already contains duplicates, run this snippet
+-- in Supabase SQL Editor:
+-- ==============================================================================
+--
+-- DELETE FROM public.scores a
+-- USING public.scores b
+-- WHERE a.id <> b.id
+--   AND a.player_id = b.player_id
+--   AND a.outpost = b.outpost
+--   AND a.difficulty = b.difficulty
+--   AND (
+--     a.score < b.score
+--     OR (a.score = b.score AND a.created_at < b.created_at)
+--     OR (a.score = b.score AND a.created_at = b.created_at AND a.id < b.id)
+--   );
+--
+-- DO $$
+-- BEGIN
+--   IF NOT EXISTS (
+--     SELECT 1 FROM pg_constraint WHERE conname = 'uq_player_outpost_diff'
+--   ) THEN
+--     ALTER TABLE public.scores ADD CONSTRAINT uq_player_outpost_diff UNIQUE (player_id, outpost, difficulty);
+--   END IF;
+-- END $$;

@@ -5,6 +5,7 @@ import AstronautAvatar from './AstronautAvatar';
 import { spaceAudio } from '../utils/audio';
 
 export default function MissionDebrief({
+  runId,
   debriefData,
   scoreData,
   playerName = 'Cadet',

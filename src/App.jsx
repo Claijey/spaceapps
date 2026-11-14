@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import HeaderBar from './components/HeaderBar';
 import ResourceHUD from './components/ResourceHUD';
@@ -82,6 +82,12 @@ export default function App() {
   const [commDelayActive, setCommDelayActive] = useState(false);
   const [houstonGuidanceQueued, setHoustonGuidanceQueued] = useState(false);
   const [missionScore, setMissionScore] = useState(null);
+  const [missionRunId, setMissionRunId] = useState(() =>
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `run_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+  );
+  const submittedRunIdsRef = useRef(new Set());
 
   // Modals & Toasts
   const [isSourcesOpen, setIsSourcesOpen] = useState(false);
@@ -153,6 +159,52 @@ export default function App() {
     loadData();
   }, []);
 
+  // Auto-Fullscreen on First User Interaction for Touch/Tablet devices
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    const isTouchTablet =
+      ('ontouchstart' in window) ||
+      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+      (navigator.maxTouchPoints > 0);
+
+    if (!isTouchTablet) return;
+
+    let hasInteracted = false;
+
+    const handleFirstInteraction = () => {
+      if (hasInteracted) return;
+      hasInteracted = true;
+
+      window.removeEventListener('pointerdown', handleFirstInteraction, true);
+      window.removeEventListener('touchstart', handleFirstInteraction, true);
+      window.removeEventListener('click', handleFirstInteraction, true);
+
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        try {
+          const docEl = document.documentElement;
+          if (docEl.requestFullscreen) {
+            docEl.requestFullscreen().catch(() => {});
+          } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen();
+          }
+        } catch (e) {
+          // Graceful silent fallback for iOS Safari or restricted webviews
+        }
+      }
+    };
+
+    window.addEventListener('pointerdown', handleFirstInteraction, { capture: true, once: true });
+    window.addEventListener('touchstart', handleFirstInteraction, { capture: true, once: true });
+    window.addEventListener('click', handleFirstInteraction, { capture: true, once: true });
+
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstInteraction, true);
+      window.removeEventListener('touchstart', handleFirstInteraction, true);
+      window.removeEventListener('click', handleFirstInteraction, true);
+    };
+  }, []);
+
   // Audio Toggle Handlers
   const handleToggleBgm = () => {
     const playing = spaceAudio.toggleBgm();
@@ -166,6 +218,11 @@ export default function App() {
 
   // Start game for selected planet (Moon or Mars)
   const handleStartGame = useCallback((chosenOutpost) => {
+    const newRunId =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `run_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    setMissionRunId(newRunId);
     const activeDiff = DIFFICULTY_CONFIGS[difficulty] || DIFFICULTY_CONFIGS.medium;
     setOutpostType(chosenOutpost);
     setCurrentDay(1);
@@ -276,6 +333,14 @@ export default function App() {
 
   // Conclude mission and save score
   const handleEndMission = async (finalB, daysCompleted) => {
+    if (missionRunId && submittedRunIdsRef.current.has(missionRunId)) {
+      console.log('Mission run already submitted, skipping duplicate:', missionRunId);
+      return;
+    }
+    if (missionRunId) {
+      submittedRunIdsRef.current.add(missionRunId);
+    }
+
     const isEmergency = finalB.power <= 0 || finalB.lifeSupport <= 0 || finalB.shielding <= 0;
     const isWin = !isEmergency;
 
@@ -284,6 +349,7 @@ export default function App() {
 
     // Persist to Universal Supabase Leaderboard (and local fallback)
     await submitScore({
+      runId: missionRunId,
       playerName: playerName || 'Cadet',
       playerId,
       playerTag,
@@ -419,7 +485,7 @@ export default function App() {
 
       {/* Main Game Stage */}
       {gameState === 'select' && (
-        <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-y-auto overscroll-contain">
+        <div className="flex-1 min-h-0 w-full overflow-hidden flex items-center justify-center">
           <OutpostSelector
             onSelectOutpost={(planet) => {
               navigate(`/${planet}`);
@@ -456,7 +522,7 @@ export default function App() {
 
           {/* ZONE 2: Center Diorama Container (flex-1 min-h-0 flex items-center justify-center) */}
           <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden">
-            <div className="w-full max-h-full flex items-center justify-center">
+            <div className="w-full h-full max-h-full min-h-0 flex items-center justify-center">
               <OutpostDioramaSVG
                 outpostType={outpostType}
                 blocks={blocks}
@@ -485,6 +551,7 @@ export default function App() {
       {gameState === 'debrief' && (
         <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-y-auto overscroll-contain">
           <MissionDebrief
+            runId={missionRunId}
             debriefData={evaluateDebrief(blocks, outpostType, lang)}
             scoreData={missionScore}
             playerName={playerName}
